@@ -8,14 +8,14 @@ using namespace std;
 
 // 클래스와 함수 정의 전에 함수 프로토타입 선언
 class Deck;
-void recommendDeck(vector<Deck>& decks);
-void viewDeckDetails(const vector<Deck>& decks);
-void recommendDeckByChampion(const vector<Deck>& decks);
-void recommendItemsByChampion(const unordered_map<string, vector<string>>& championItems);
-void recommendChampionsByItem(const unordered_map<string, vector<string>>& itemChampions);
-void addItemsToDecks(vector<Deck>& decks);
-void recommendDeckByAugment(const vector<Deck>& decks, const unordered_map<string, vector<string>>& augmentDecks);
-void recommendAugmentsForDeck(const Deck& deck, const unordered_map<string, vector<string>>& deckAugments);
+void RecommendDeck(vector<Deck>& decks);
+void ViewDeckDetails(const vector<Deck>& decks);
+void RecommendDeckByChampion(const vector<Deck>& decks);
+void RecommendItemsByChampion(const unordered_map<string, vector<string>>& champion_items);
+void RecommendChampionsByItem(const unordered_map<string, vector<string>>& item_champions);
+void AddItemsToDecks(vector<Deck>& decks);
+void RecommendDeckByAugment(const vector<Deck>& decks, const unordered_map<string, vector<string>>& augment_decks);
+void RecommendAugmentsForDeck(const Deck& deck, const unordered_map<string, vector<string>>& deck_augments);
 
 // 아이템 클래스 정의
 class Item {
@@ -26,10 +26,10 @@ private:
 public:
     Item(string n, string t) : name(n), type(t) {}
 
-    string getName() const { return name; }
-    string getType() const { return type; }
+    string GetName() const { return name; }
+    string GetType() const { return type; }
 
-    void printItemInfo() const {
+    void PrintItemInfo() const {
         cout << "아이템 이름: " << name << ", 유형: " << type << "\n";
     }
 };
@@ -38,41 +38,41 @@ public:
 class Deck {
 private:
     string name;
-    double winRate;
-    double avgPlacement;
-    double top4Rate;
-    double usageCount;
+    double win_rate;
+    double avg_placement;
+    double top4_rate;
+    double usage_count;
     int score;
     vector<string> champions;
-    vector<Item> recommendedItems;
+    vector<Item> recommended_items;
 
 public:
     // 생성자
     Deck(string n, double wr, double ap, double t4r, double uc, vector<string> champs)
-        : name(n), winRate(wr), avgPlacement(ap), top4Rate(t4r), usageCount(uc), champions(champs), score(0) {}
+        : name(n), win_rate(wr), avg_placement(ap), top4_rate(t4r), usage_count(uc), champions(champs), score(0) {}
 
     // 멤버 변수 접근을 위한 getter 함수
-    string getName() const { return name; }
-    double getWinRate() const { return winRate; }
-    double getAvgPlacement() const { return avgPlacement; }
-    double getTop4Rate() const { return top4Rate; }
-    double getUsageCount() const { return usageCount; }
-    int getScore() const { return score; }
-    const vector<string>& getChampions() const { return champions; }
-    const vector<Item>& getRecommendedItems() const { return recommendedItems; }
+    string GetName() const { return name; }
+    double GetWinRate() const { return win_rate; }
+    double GetAvgPlacement() const { return avg_placement; }
+    double GetTop4Rate() const { return top4_rate; }
+    double GetUsageCount() const { return usage_count; }
+    int GetScore() const { return score; }
+    const vector<string>& GetChampions() const { return champions; }
+    const vector<Item>& GetRecommendedItems() const { return recommended_items; }
 
     // 점수 설정 메서드
-    void setScore(int newScore) {
-        score = newScore;
+    void SetScore(int new_score) {
+        score = new_score;
     }
 
     // 추천 아이템 추가 메서드
-    void addRecommendedItem(const Item& item) {
-        recommendedItems.push_back(item);
+    void AddRecommendedItem(const Item& itm) {
+        recommended_items.push_back(itm);
     }
 
     // 덱 정보 출력 메서드
-    void printDeckInfo() const {
+    void PrintDeckInfo() const {
         string tier;
         if (score >= 12) {
             tier = "S";
@@ -84,10 +84,10 @@ public:
             tier = "C";
         }
         cout << "덱 이름: " << name << "\n";
-        cout << "승률: " << winRate << "%\n";
-        cout << "평균 등수: " << avgPlacement << "\n";
-        cout << "Top 4 비율: " << top4Rate << "%\n";
-        cout << "사용 비율: " << usageCount << "\n";
+        cout << "승률: " << win_rate << "%\n";
+        cout << "평균 등수: " << avg_placement << "\n";
+        cout << "Top 4 비율: " << top4_rate << "%\n";
+        cout << "사용 비율: " << usage_count << "\n";
         cout << "티어: " << tier << "\n";
         cout << "구성 챔피언: ";
         for (size_t i = 0; i < champions.size(); ++i) {
@@ -97,9 +97,9 @@ public:
             }
         }
         cout << "\n추천 아이템: ";
-        for (size_t i = 0; i < recommendedItems.size(); ++i) {
-            cout << recommendedItems[i].getName();
-            if (i < recommendedItems.size() - 1) {
+        for (size_t i = 0; i < recommended_items.size(); ++i) {
+            cout << recommended_items[i].GetName();
+            if (i < recommended_items.size() - 1) {
                 cout << " / ";
             }
         }
@@ -107,67 +107,32 @@ public:
     }
 };
 
-// 증강체에 어울리는 덱 추천 기능 구현 함수 정의
-void recommendDeckByAugment(const vector<Deck>& decks, const unordered_map<string, vector<string>>& augmentDecks) {
-    string augment;
-    cout << "추천받고 싶은 증강체 이름을 입력하세요: ";
-    cin.ignore();
-    getline(cin, augment);
-
-    auto it = augmentDecks.find(augment);
-    if (it != augmentDecks.end()) {
-        cout << "증강체 " << augment << "에 맞는 덱:\n";
-        for (const auto& deckName : it->second) {
-            for (const auto& deck : decks) {
-                if (deck.getName() == deckName) {
-                    deck.printDeckInfo();
-                }
-            }
-        }
-    } else {
-        cout << "해당 증강체에 대한 덱 정보가 없습니다." << endl;
-    }
-}
-
-// 덱에 어울리는 증강체 추천 기능 구현 함수 정의
-void recommendAugmentsForDeck(const Deck& deck, const unordered_map<string, vector<string>>& deckAugments) {
-    auto it = deckAugments.find(deck.getName());
-    if (it != deckAugments.end()) {
-        cout << "덱 " << deck.getName() << "에 추천되는 증강체:\n";
-        for (const auto& augment : it->second) {
-            cout << augment << "\n";
-        }
-    } else {
-        cout << "해당 덱에 대한 증강체 정보가 없습니다." << endl;
-    }
-}
-
 // 최고 승률 덱 추천 기능 구현 함수 정의
-void recommendDeck(vector<Deck>& decks) {
+void RecommendDeck(vector<Deck>& decks) {
     if (decks.empty()) {
         cout << "덱 정보가 없습니다." << endl;
         return;
     }
     sort(decks.begin(), decks.end(), [](const Deck& a, const Deck& b) {
-        return a.getWinRate() > b.getWinRate();
+        return a.GetWinRate() > b.GetWinRate();
     });
     cout << "추천 덱 (승률 기준):\n";
-    decks[0].printDeckInfo();
+    decks[0].PrintDeckInfo();
 }
 
 // 모든 덱 정보 보기 기능 구현 함수 정의
-void viewDeckDetails(const vector<Deck>& decks) {
+void ViewDeckDetails(const vector<Deck>& decks) {
     if (decks.empty()) {
         cout << "덱 정보가 없습니다." << endl;
         return;
     }
     for (const auto& deck : decks) {
-        deck.printDeckInfo();
+        deck.PrintDeckInfo();
     }
 }
 
 // 챔피언 기반 덱 추천 기능 구현 함수 정의
-void recommendDeckByChampion(const vector<Deck>& decks) {
+void RecommendDeckByChampion(const vector<Deck>& decks) {
     string champion;
     cout << "추천받고 싶은 챔피언 이름을 입력하세요: ";
     cin.ignore();
@@ -175,8 +140,8 @@ void recommendDeckByChampion(const vector<Deck>& decks) {
 
     bool found = false;
     for (const auto& deck : decks) {
-        if (find(deck.getChampions().begin(), deck.getChampions().end(), champion) != deck.getChampions().end()) {
-            deck.printDeckInfo();
+        if (find(deck.GetChampions().begin(), deck.GetChampions().end(), champion) != deck.GetChampions().end()) {
+            deck.PrintDeckInfo();
             found = true;
         }
     }
@@ -186,14 +151,14 @@ void recommendDeckByChampion(const vector<Deck>& decks) {
 }
 
 // 챔피언에 맞는 아이템 추천 기능 구현 함수 정의
-void recommendItemsByChampion(const unordered_map<string, vector<string>>& championItems) {
+void RecommendItemsByChampion(const unordered_map<string, vector<string>>& champion_items) {
     string champion;
     cout << "추천받고 싶은 챔피언 이름을 입력하세요: ";
     cin.ignore();
     getline(cin, champion);
 
-    auto it = championItems.find(champion);
-    if (it != championItems.end()) {
+    auto it = champion_items.find(champion);
+    if (it != champion_items.end()) {
         cout << "챔피언 " << champion << "에 추천되는 아이템:\n";
         for (const auto& item : it->second) {
             cout << item << "\n";
@@ -201,17 +166,18 @@ void recommendItemsByChampion(const unordered_map<string, vector<string>>& champ
     } else {
         cout << "해당 챔피언에 대한 아이템 정보가 없습니다." << endl;
     }
+    cout << "-----------------------\n";
 }
 
 // 아이템에 맞는 챔피언 추천 기능 구현 함수 정의
-void recommendChampionsByItem(const unordered_map<string, vector<string>>& itemChampions) {
+void RecommendChampionsByItem(const unordered_map<string, vector<string>>& item_champions) {
     string item;
     cout << "추천받고 싶은 아이템 이름을 입력하세요: ";
     cin.ignore();
     getline(cin, item);
 
-    auto it = itemChampions.find(item);
-    if (it != itemChampions.end()) {
+    auto it = item_champions.find(item);
+    if (it != item_champions.end()) {
         cout << "아이템 " << item << "에 맞는 챔피언:\n";
         for (const auto& champion : it->second) {
             cout << champion << "\n";
@@ -219,6 +185,21 @@ void recommendChampionsByItem(const unordered_map<string, vector<string>>& itemC
     } else {
         cout << "해당 아이템에 대한 챔피언 정보가 없습니다." << endl;
     }
+    cout << "-----------------------\n";
+}
+
+// 덱에 어울리는 증강체 추천 기능 구현 함수 정의
+void RecommendAugmentsForDeck(const Deck& deck, const unordered_map<string, vector<string>>& deck_augments) {
+    auto it = deck_augments.find(deck.GetName());
+    if (it != deck_augments.end()) {
+        cout << "덱 " << deck.GetName() << "에 추천되는 증강체:\n";
+        for (const auto& augment : it->second) {
+            cout << augment << "\n";
+        }
+    } else {
+        cout << "해당 덱에 대한 증강체 정보가 없습니다." << endl;
+    }
+    cout << "-----------------------\n";
 }
 
 int main() {
@@ -230,8 +211,25 @@ int main() {
         {"요정 쇄도자 덱", 14.1, 4.38, 52.2, 0.48, {"Kalista", "Rakan", "Milio"}}
     };
 
+    // 추천 아이템 추가
+    unordered_map<string, vector<Item>> deck_items = {
+        {"차원문 덱", {Item("staff", "magic"), Item("mana essence", "magic")}},
+        {"달콤술사 전사 덱", {Item("sword", "physical"), Item("chain vest", "armor")}},
+        {"아르카나 폭파단 덱", {Item("staff", "magic"), Item("giant belt", "health")}},
+        {"요정 쇄도자 덱", {Item("bow", "ranged"), Item("mana essence", "magic")}}
+    };
+
+    for (auto& deck : decks) {
+        auto it = deck_items.find(deck.GetName());
+        if (it != deck_items.end()) {
+            for (const auto& itm : it->second) {
+                deck.AddRecommendedItem(itm);
+            }
+        }
+    }
+
     // 덱별 증강체 추천 데이터 정의
-    unordered_map<string, vector<string>> deckAugments = {
+    unordered_map<string, vector<string>> deck_augments = {
         {"차원문 덱", {"작은 친구들", "차원문 문장"}},
         {"달콤술사 전사 덱", {"캐러멜을 바른 아늑함", "달콤술사 문장", "큰 꾸러미"}},
         {"아르카나 폭파단 덱", {"아르카나 전달자", "아르카나 문장", "단결된 의지"}},
@@ -251,20 +249,20 @@ int main() {
         cin >> choice;
 
         if (choice == 1) {
-            recommendDeck(decks);
+            RecommendDeck(decks);
         } else if (choice == 2) {
-            viewDeckDetails(decks);
+            ViewDeckDetails(decks);
         } else if (choice == 3) {
-            recommendDeckByChampion(decks);
+            RecommendDeckByChampion(decks);
         } else if (choice == 4) {
-            int subChoice;
+            int sub_choice;
             cout << "1. 챔피언에 맞는 아이템 추천\n";
             cout << "2. 아이템에 맞는 챔피언 추천\n";
             cout << "선택: ";
-            cin >> subChoice;
+            cin >> sub_choice;
 
-            if (subChoice == 1) {
-                unordered_map<string, vector<string>> championItems = {
+            if (sub_choice == 1) {
+                unordered_map<string, vector<string>> champion_items = {
                     {"Ryze", {"staff", "mana essence"}},
                     {"Taric", {"chain vest", "magic cloak"}},
                     {"TahmKench", {"giant belt"}},
@@ -276,9 +274,9 @@ int main() {
                     {"Kalista", {"bow"}},
                     {"Milio", {"mana essence"}}
                 };
-                recommendItemsByChampion(championItems);
-            } else if (subChoice == 2) {
-                unordered_map<string, vector<string>> itemChampions = {
+                RecommendItemsByChampion(champion_items);
+            } else if (sub_choice == 2) {
+                unordered_map<string, vector<string>> item_champions = {
                     {"staff", {"Ryze", "Gwen", "Xerath"}},
                     {"mana essence", {"Ryze", "Varus", "Xerath", "Milio"}},
                     {"chain vest", {"Taric"}},
@@ -286,21 +284,21 @@ int main() {
                     {"sword", {"Fiora", "Varus"}},
                     {"bow", {"Kalista"}}
                 };
-                recommendChampionsByItem(itemChampions);
+                RecommendChampionsByItem(item_champions);
             } else {
                 cout << "잘못된 입력입니다. 다시 시도하세요." << endl;
             }
         } else if (choice == 5) {
-            int deckChoice;
+            int deck_choice;
             cout << "증강체를 추천받고 싶은 덱을 선택하세요:\n";
             for (size_t i = 0; i < decks.size(); ++i) {
-                cout << i + 1 << ". " << decks[i].getName() << "\n";
+                cout << i + 1 << ". " << decks[i].GetName() << "\n";
             }
             cout << "선택: ";
-            cin >> deckChoice;
+            cin >> deck_choice;
 
-            if (deckChoice >= 1 && deckChoice <= decks.size()) {
-                recommendAugmentsForDeck(decks[deckChoice - 1], deckAugments);
+            if (deck_choice >= 1 && deck_choice <= decks.size()) {
+                RecommendAugmentsForDeck(decks[deck_choice - 1], deck_augments);
             } else {
                 cout << "잘못된 입력입니다. 다시 시도하세요." << endl;
             }
