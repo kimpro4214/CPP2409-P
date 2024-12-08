@@ -1,0 +1,4 @@
+차원문 덱,15.3,4.31,52.5,0.30,Ryze/Taric/TahmKench
+달콤술사 전사 덱,16.5,4.43,50.1,0.30,Gwen/Fiora/Rakan
+아르카나 폭파단 덱,13.0,4.66,46.4,0.17,Varus/TahmKench/Xerath
+요정 쇄도자 덱,14.1,4.38,52.2,0.48,Kalista/Rakan/Milio

@@ -1,5 +1,7 @@
 #include <iostream>
 #include <string>
+#include <sstream>
+#include <fstream>
 #include <vector>
 #include <algorithm>
 #include <unordered_map>
@@ -16,6 +18,8 @@ void RecommendChampionsByItem(const unordered_map<string, vector<string>>& item_
 void AddItemsToDecks(vector<Deck>& decks);
 void RecommendDeckByAugment(const vector<Deck>& decks, const unordered_map<string, vector<string>>& augment_decks);
 void RecommendAugmentsForDeck(const Deck& deck, const unordered_map<string, vector<string>>& deck_augments);
+vector<Deck> LoadDecksFromFile(const string& filename);
+void AnalyzeMistakesWithDeck(const string& filename, const vector<Deck>& decks);
 
 // 아이템 클래스 정의
 class Item {
@@ -202,14 +206,133 @@ void RecommendAugmentsForDeck(const Deck& deck, const unordered_map<string, vect
     cout << "-----------------------\n";
 }
 
+// 파일에서 덱 데이터를 읽는 함수
+vector<Deck> LoadDecksFromFile(const string& filename) {
+    vector<Deck> decks;
+    ifstream file(filename);
+
+    if (!file.is_open()) {
+        cerr << "파일을 열 수 없습니다: " << filename << endl;
+        return decks;
+    }
+
+    string line;
+    while (getline(file, line)) {
+        stringstream ss(line);
+        string name, win_rate_str, avg_placement_str, top4_rate_str, usage_count_str, champions_str;
+
+        // 데이터를 ','를 기준으로 분리
+        getline(ss, name, ',');
+        getline(ss, win_rate_str, ',');
+        getline(ss, avg_placement_str, ',');
+        getline(ss, top4_rate_str, ',');
+        getline(ss, usage_count_str, ',');
+        getline(ss, champions_str, ',');
+
+        // 문자열을 숫자로 변환
+        double win_rate = stod(win_rate_str);
+        double avg_placement = stod(avg_placement_str);
+        double top4_rate = stod(top4_rate_str);
+        double usage_count = stod(usage_count_str);
+
+        // 챔피언을 '/' 기준으로 분리
+        vector<string> champions;
+        stringstream champs_ss(champions_str);
+        string champion;
+        while (getline(champs_ss, champion, '/')) {
+            champions.push_back(champion);
+        }
+
+        // Deck 객체 생성 후 벡터에 추가
+        decks.emplace_back(name, win_rate, avg_placement, top4_rate, usage_count, champions);
+    }
+
+    file.close();
+    return decks;
+}
+
+//개인 피드백 제공
+void AnalyzeMistakesWithDeck(const string& filename, const vector<Deck>& decks) {
+    ifstream file(filename);
+    if (!file.is_open()) {
+        cerr << "사용자 데이터를 열 수 없습니다: " << filename << endl;
+        return;
+    }
+
+    unordered_map<string, int> mistake_summary;
+    string line;
+    while (getline(file, line)) {
+        stringstream ss(line);
+        string deck_name, champion_name, item_name;
+
+        // CSV 데이터 읽기
+        getline(ss, deck_name, ',');
+        getline(ss, champion_name, ',');
+        getline(ss, item_name, ',');
+
+        // 디버깅: 읽은 데이터 확인
+        cout << "읽은 데이터 -> 덱: " << deck_name << ", 챔피언: " << champion_name << ", 아이템: " << item_name << endl;
+
+        // 덱 확인
+        auto it = find_if(decks.begin(), decks.end(), [&deck_name](const Deck& d) {
+            return d.GetName() == deck_name;
+        });
+
+        if (it != decks.end()) {
+            const Deck& deck = *it;
+
+            // 챔피언 확인
+            bool champion_found = find(deck.GetChampions().begin(), deck.GetChampions().end(), champion_name) != deck.GetChampions().end();
+            cout << "챔피언 매칭 결과: " << (champion_found ? "매칭됨" : "매칭되지 않음") << endl;
+
+            // 아이템 확인
+            bool item_found = false;
+            for (const auto& item : deck.GetRecommendedItems()) {
+                if (item.GetName() == item_name) {
+                    item_found = true;
+                    break;
+                }
+            }
+            cout << "아이템 매칭 결과: " << (item_found ? "매칭됨" : "매칭되지 않음") << endl;
+
+            // 결과 저장
+            if (!champion_found) {
+                mistake_summary["챔피언 잘못 선택"]++;
+            }
+            if (!item_found) {
+                mistake_summary["아이템 잘못 선택"]++;
+            }
+        } else {
+            mistake_summary["알 수 없는 덱"]++;
+            cout << "알 수 없는 덱: " << deck_name << endl;
+        }
+    }
+
+    // 결과 출력
+    cout << "실수 분석 결과:\n";
+    if (mistake_summary.empty()) {
+        cout << "실수가 없습니다." << endl;
+    } else {
+        for (const auto& entry : mistake_summary) {
+            cout << entry.first << " - " << entry.second << "회\n";
+        }
+    }
+    cout << "-----------------------\n";
+
+    file.close();
+}
+
+
+       
 int main() {
-    // 덱 데이터
-    vector<Deck> decks = {
-        {"차원문 덱", 15.3, 4.31, 52.5, 0.30, {"Ryze", "Taric", "TahmKench"}},
-        {"달콤술사 전사 덱", 16.5, 4.43, 50.1, 0.30, {"Gwen", "Fiora", "Rakan"}},
-        {"아르카나 폭파단 덱", 13.0, 4.66, 46.4, 0.17, {"Varus", "TahmKench", "Xerath"}},
-        {"요정 쇄도자 덱", 14.1, 4.38, 52.2, 0.48, {"Kalista", "Rakan", "Milio"}}
-    };
+    // txt 파일에서 덱 데이터 읽기
+    string filename = "decks.txt";
+    vector<Deck> decks = LoadDecksFromFile(filename);
+
+    if (decks.empty()) {
+        cout << "덱 데이터가 없습니다." << endl;
+        return 0;
+    }
 
     // 추천 아이템 추가
     unordered_map<string, vector<Item>> deck_items = {
@@ -236,6 +359,8 @@ int main() {
         {"요정 쇄도자 덱", {"왕실 근위대", "판도라의 아이템", "요정 문장"}}
     };
 
+
+
     int choice;
     while (true) {
         cout << "덱 추천 프로그램입니다. 옵션을 선택하세요:\n";
@@ -244,7 +369,8 @@ int main() {
         cout << "3. 챔피언 기반 덱 추천\n";
         cout << "4. 아이템 추천\n";
         cout << "5. 덱에 맞는 증강체 추천\n";
-        cout << "6. 종료\n";
+        cout << "6. 개인 피드백 제공\n";
+        cout << "7. 종료\n";
         cout << "선택: ";
         cin >> choice;
 
@@ -303,6 +429,11 @@ int main() {
                 cout << "잘못된 입력입니다. 다시 시도하세요." << endl;
             }
         } else if (choice == 6) {
+            string user_data_file;
+            cout << "사용자 데이터 파일 이름을 입력하세요: ";
+            cin >> user_data_file;
+            AnalyzeMistakesWithDeck(user_data_file, decks); 
+        } else if (choice == 7) {
             cout << "프로그램을 종료합니다." << endl;
             break;
         } else {
