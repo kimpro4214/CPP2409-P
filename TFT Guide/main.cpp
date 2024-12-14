@@ -20,6 +20,8 @@ void RecommendDeckByAugment(const vector<Deck>& decks, const unordered_map<strin
 void RecommendAugmentsForDeck(const Deck& deck, const unordered_map<string, vector<string>>& deck_augments);
 vector<Deck> LoadDecksFromFile(const string& filename);
 void AnalyzeMistakesWithDeck(const string& filename, const vector<Deck>& decks);
+void RecommendPosition(const string& deck_name, const unordered_map<string, unordered_map<string, pair<int, int>>>& deck_positions);
+void DisplayBoard(const unordered_map<string, pair<int, int>>& positions);
 
 // 아이템 클래스 정의
 class Item {
@@ -322,7 +324,39 @@ void AnalyzeMistakesWithDeck(const string& filename, const vector<Deck>& decks) 
     file.close();
 }
 
+// 시각적 배치도 출력 함수
+void DisplayBoard(const unordered_map<string, pair<int, int>>& positions) {
+    const int rows = 4, cols = 7; // 4x7 그리드
+    vector<vector<string>> board(rows, vector<string>(cols, " . "));
 
+    for (const auto& [champion, pos] : positions) {
+        int x = pos.first - 1; // 1-based to 0-based indexing
+        int y = pos.second - 1;
+        if (x >= 0 && x < rows && y >= 0 && y < cols) {
+            board[x][y] = champion.substr(0, 3); // 챔피언 이름 줄임
+        }
+    }
+
+    cout << "\n------- 시각적 배치도 -------\n";
+    for (const auto& row : board) {
+        for (const auto& cell : row) {
+            cout << cell << " ";
+        }
+        cout << "\n";
+    }
+    cout << "-----------------------------\n";
+}
+
+// 덱별 배치 추천 함수
+void RecommendPosition(const string& deck_name, const unordered_map<string, unordered_map<string, pair<int, int>>>& deck_positions) {
+    auto it = deck_positions.find(deck_name);
+    if (it != deck_positions.end()) {
+        cout << deck_name << " 배치도 추천:\n";
+        DisplayBoard(it->second);
+    } else {
+        cout << "해당 덱에 대한 배치도 정보가 없습니다.\n";
+    }
+}
        
 int main() {
     // txt 파일에서 덱 데이터 읽기
@@ -333,6 +367,13 @@ int main() {
         cout << "덱 데이터가 없습니다." << endl;
         return 0;
     }
+
+    unordered_map<string, unordered_map<string, pair<int, int>>> deck_positions = {
+        {"차원문 덱", {{"Ryze", {4, 1}}, {"Taric", {1, 3}}, {"TahmKench", {1, 5}}}},
+        {"달콤술사 전사 덱", {{"Gwen", {1, 2}}, {"Fiora", {1, 3}}, {"Rakan", {1, 4}}}},
+        {"아르카나 폭파단 덱", {{"Varus", {4, 1}}, {"Xerath", {4, 7}}, {"TahmKench", {1, 4}}}},
+        {"요정 쇄도자 덱", {{"Kalista", {4, 1}}, {"Rakan", {1, 2}}, {"Milio", {4, 3}}}}
+    };
 
     // 추천 아이템 추가
     unordered_map<string, vector<Item>> deck_items = {
@@ -370,7 +411,8 @@ int main() {
         cout << "4. 아이템 추천\n";
         cout << "5. 덱에 맞는 증강체 추천\n";
         cout << "6. 개인 피드백 제공\n";
-        cout << "7. 종료\n";
+        cout << "7. 배치도 추천\n";
+        cout << "8. 종료\n";
         cout << "선택: ";
         cin >> choice;
 
@@ -434,12 +476,26 @@ int main() {
             cin >> user_data_file;
             AnalyzeMistakesWithDeck(user_data_file, decks); 
         } else if (choice == 7) {
+            cout << "배치도를 추천받고 싶은 덱을 선택하세요:\n";
+            for (size_t i = 0; i < decks.size(); ++i) {
+                cout << i + 1 << ". " << decks[i].GetName() << "\n";
+            }
+            cout << "선택: ";
+            int deck_choice;
+            cin >> deck_choice;
+
+            if (deck_choice >= 1 && deck_choice <= decks.size()) {
+                RecommendPosition(decks[deck_choice - 1].GetName(), deck_positions);
+            } else {
+                cout << "잘못된 입력입니다. 다시 시도하세요.\n";
+            }
+        } else if (choice == 8) {
             cout << "프로그램을 종료합니다." << endl;
             break;
         } else {
             cout << "잘못된 입력입니다. 다시 시도하세요." << endl;
         }
-    }
 
+    }
     return 0;
 }
