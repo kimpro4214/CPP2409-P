@@ -72,6 +72,29 @@ public:
         score = new_score;
     }
 
+    void SetScore(){
+        // 가중치 설정
+        const double win_rate_weight = 0.4;
+        const double avg_placement_weight = 0.3;
+        const double top4_rate_weight = 0.2;
+        const double usage_count_weight = 0.1;
+
+        // 기준값
+        const double max_win_rate = 100.0; // 승률 최대값 100%
+        const double min_avg_placement = 1.0; // 평균 등수 최소값 1.0
+        const double max_top4_rate = 100.0; // Top4 비율 최대값 100%
+        const double max_usage_count = 10.0; // 사용 비율 최대값 (가정)
+
+        // 점수 계산 (0 ~ 100 범위로 조정)
+        double win_rate_score = (win_rate / max_win_rate) * 100 * win_rate_weight;
+        double avg_placement_score = ((4.0 - avg_placement) / (4.0 - min_avg_placement)) * 100 * avg_placement_weight;
+        double top4_rate_score = (top4_rate / max_top4_rate) * 100 * top4_rate_weight;
+        double usage_count_score = (usage_count / max_usage_count) * 100 * usage_count_weight;
+
+        // 총 점수 계산
+        score = static_cast<int>(win_rate_score + avg_placement_score + top4_rate_score + usage_count_score);
+    }
+
     // 추천 아이템 추가 메서드
     void AddRecommendedItem(const Item& itm) {
         recommended_items.push_back(itm);
@@ -80,7 +103,7 @@ public:
     // 덱 정보 출력 메서드
     void PrintDeckInfo() const {
         string tier;
-        if (score >= 12) {
+        if (score >= 13) {
             tier = "S";
         } else if (score >= 9) {
             tier = "A";
@@ -120,7 +143,7 @@ void RecommendDeck(vector<Deck>& decks) {
         return;
     }
     sort(decks.begin(), decks.end(), [](const Deck& a, const Deck& b) {
-        return a.GetWinRate() > b.GetWinRate();
+        return a.GetScore() > b.GetScore();
     });
     cout << "추천 덱 (승률 기준):\n";
     decks[0].PrintDeckInfo();
@@ -223,7 +246,7 @@ vector<Deck> LoadDecksFromFile(const string& filename) {
         stringstream ss(line);
         string name, win_rate_str, avg_placement_str, top4_rate_str, usage_count_str, champions_str;
 
-        // 데이터를 ','를 기준으로 분리
+        // 데이터 읽기
         getline(ss, name, ',');
         getline(ss, win_rate_str, ',');
         getline(ss, avg_placement_str, ',');
@@ -231,13 +254,13 @@ vector<Deck> LoadDecksFromFile(const string& filename) {
         getline(ss, usage_count_str, ',');
         getline(ss, champions_str, ',');
 
-        // 문자열을 숫자로 변환
+        // 숫자로 변환
         double win_rate = stod(win_rate_str);
         double avg_placement = stod(avg_placement_str);
         double top4_rate = stod(top4_rate_str);
         double usage_count = stod(usage_count_str);
 
-        // 챔피언을 '/' 기준으로 분리
+        // 챔피언 리스트 분리
         vector<string> champions;
         stringstream champs_ss(champions_str);
         string champion;
@@ -245,13 +268,16 @@ vector<Deck> LoadDecksFromFile(const string& filename) {
             champions.push_back(champion);
         }
 
-        // Deck 객체 생성 후 벡터에 추가
+        // 덱 생성 및 점수 계산
         decks.emplace_back(name, win_rate, avg_placement, top4_rate, usage_count, champions);
+        decks.back().SetScore(); // 점수 자동 계산
     }
 
     file.close();
     return decks;
 }
+
+
 
 //개인 피드백 제공
 void AnalyzeMistakesWithDeck(const string& filename, const vector<Deck>& decks) {
